@@ -17,6 +17,14 @@ class CreateJobRequest(BaseModel):
     technician: str = Field(default="Unassigned", min_length=1, max_length=120)
 
 
+class UpdatePriorityRequest(BaseModel):
+    """Priority change requested by an operations coordinator."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    priority: str = Field(min_length=1, max_length=20)
+
+
 class Job(CreateJobRequest):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid", frozen=True)
 

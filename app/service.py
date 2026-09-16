@@ -26,6 +26,21 @@ class JobService:
             self._next_id += 1
             return job
 
+    def update_priority(self, job_id: int, priority: str) -> Optional[Job]:
+        """Change the priority of an existing job.
+
+        Jobs are frozen, so the stored record is replaced with an updated copy.
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            data = job.model_dump()
+            data["priority"] = priority
+            updated = Job(**data)
+            self._jobs[job_id] = updated
+            return updated
+
     @classmethod
     def with_demo_data(cls) -> "JobService":
         service = cls()
