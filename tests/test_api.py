@@ -12,6 +12,13 @@ def client(monkeypatch):
         yield client
 
 
+@pytest.fixture
+def empty_client(monkeypatch):
+    monkeypatch.setattr(main, "service", JobService())
+    with TestClient(main.app) as client:
+        yield client
+
+
 def test_dashboard_health_and_docs(client):
     page = client.get("/")
     assert page.status_code == 200
@@ -45,6 +52,13 @@ def test_export_jobs_returns_csv_download(client):
     assert lines[1] == (
         "1,Contoso Madrid,Server room cooling alert,critical,open"
     )
+
+
+def test_export_jobs_returns_header_only_when_empty(empty_client):
+    response = empty_client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert response.text.splitlines() == ["ID,customer,description,priority,status"]
 
 
 def test_export_jobs_escapes_csv_values(client):
