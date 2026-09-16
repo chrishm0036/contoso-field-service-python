@@ -1,4 +1,4 @@
-"""Validated API and domain models."""
+"""Validated API and domain models for field-service jobs."""
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -21,5 +21,5 @@ class Job(CreateJobRequest):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid", frozen=True)
 
     id: int = Field(gt=0)
-    status: Literal["open"] = "open"
+    status: Literal["open", "completed"] = "open"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

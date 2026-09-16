@@ -1,3 +1,4 @@
+"""HTTP contract tests for the field-service API and dashboard."""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,7 @@ def test_dashboard_health_and_docs(client):
     assert page.status_code == 200
     assert "text/html" in page.headers["content-type"]
     assert "Contoso Field Service" in page.text
+    assert 'class="complete-job"' in page.text
     assert client.get("/health").json() == {"status": "ok"}
     assert client.get("/docs").status_code == 200
     for asset in ("app.js", "styles.css"):
@@ -45,6 +47,22 @@ def test_create_job(client):
     assert job["status"] == "open"
     assert client.get("/jobs/7").json() == job
     assert len(client.get("/jobs").json()) == 7
+
+
+def test_complete_job(client):
+    response = client.patch("/jobs/1/complete")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "completed"
+    assert client.get("/jobs/1").json()["status"] == "completed"
+    assert client.patch("/jobs/1/complete").json() == response.json()
+
+
+def test_complete_unknown_or_invalid_job(client):
+    response = client.patch("/jobs/999/complete")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Job not found"}
+    assert client.patch("/jobs/not-an-id/complete").status_code == 422
 
 
 @pytest.mark.parametrize("payload", [

@@ -33,7 +33,7 @@ Six fictitious incidents are seeded automatically. The in-memory store resets on
 | `app/static/` | Plain HTML, CSS, and JavaScript dashboard |
 | `tests/` | Isolated service and API tests |
 
-The API exposes `GET /health`, `GET /jobs`, `GET /jobs/{job_id}`, and `POST /jobs`. Jobs include customer, incident description, priority, status, location, technician, and a UTC creation timestamp. Priorities are `normal`, `high`, and `critical`; baseline jobs have `open` status. New jobs can be created through Swagger and shown with the dashboard's Refresh button.
+The API exposes `GET /health`, `GET /jobs`, `GET /jobs/{job_id}`, `POST /jobs`, and `PATCH /jobs/{job_id}/complete`. Jobs include customer, incident description, priority, status, location, technician, and a UTC creation timestamp. Priorities are `normal`, `high`, and `critical`; jobs have `open` or `completed` status. New jobs can be created through Swagger and shown with the dashboard's Refresh button, while open jobs can be completed directly from the dashboard.
 
 Repository-wide Copilot guidance lives in `.github/copilot-instructions.md`; path-specific guidance lives in `.github/instructions/`. `AGENTS.md` provides repository-level agent instructions. These describe architecture, validation, testing, and change discipline without relying on automatic custom-agent selection.
 

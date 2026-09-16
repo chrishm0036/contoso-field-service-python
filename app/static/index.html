@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Operations dashboard for viewing and completing field-service jobs. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -27,6 +28,7 @@
     <section class="workspace" aria-labelledby="jobs-title">
       <div class="section-heading"><div><h2 id="jobs-title">Service jobs <span id="total-count" class="count">0</span></h2><p>A clear picture of every customer incident.</p></div><button id="refresh" class="refresh" type="button"><span aria-hidden="true">↻</span> Refresh</button></div>
       <div class="toolbar"><div class="filters" role="group" aria-label="Filter by priority"><button type="button" data-priority="all" aria-pressed="true">All jobs</button><button type="button" data-priority="critical" aria-pressed="false">Critical</button><button type="button" data-priority="high" aria-pressed="false">High</button><button type="button" data-priority="normal" aria-pressed="false">Normal</button></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search jobs, customers, people…" aria-label="Search jobs, customers, or technicians"></label></div>
+      <p id="action-status" class="sr-only" role="status" aria-live="polite"></p>
       <p id="notice" class="notice" role="status" aria-live="polite">Loading service jobs…</p>
       <div id="jobs" class="jobs"></div>
       <div class="list-footer"><span id="results" aria-live="polite">Retrieving jobs</span><span>All times shown in your local time zone</span></div>
@@ -38,7 +40,7 @@
       <div class="job-top"><span class="job-id"></span><span class="badge priority"></span></div>
       <p class="customer"></p><h3 class="description"></h3>
       <div class="job-details"><p><span class="detail-symbol" aria-hidden="true">⌖</span><span class="location"></span></p><p><span class="person-icon" aria-hidden="true">◉</span><span class="technician"></span></p></div>
-      <div class="job-bottom"><span class="status"><span class="dot"></span>Open</span><time class="created"></time></div>
+      <div class="job-bottom"><span class="status" tabindex="-1"><span class="dot"></span><span class="status-label">Open</span></span><div class="job-actions"><time class="created"></time><button class="complete-job" type="button">Complete</button></div></div>
     </article>
   </template>
 </body>
