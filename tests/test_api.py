@@ -52,7 +52,7 @@ def test_create_job(client):
     {"customer_name": "Customer", "description": "Issue", "priority": "urgent"},
     {"customer_name": "Customer", "description": "Issue", "status": "closed"},
     {"customer_name": "\u200b", "description": "Issue"},
-    {"customer_name": "Customer", "description": "Issue", "location": "Madrid\nFloor 2"},
+    {"customer_name": "Customer", "description": "Issue", "location": "Madrid\u2066Floor 2"},
 ])
 def test_invalid_create_leaves_store_unchanged(client, payload):
     assert client.post("/jobs", json=payload).status_code == 422

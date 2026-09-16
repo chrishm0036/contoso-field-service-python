@@ -8,8 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 Priority = Literal["normal", "high", "critical"]
 
 
-def _has_control_or_format_characters(value: str) -> bool:
-    return any(unicodedata.category(character) in {"Cc", "Cf"} for character in value)
+def _has_invisible_format_characters(value: str) -> bool:
+    return any(unicodedata.category(character) == "Cf" for character in value)
 
 
 class CreateJobRequest(BaseModel):
@@ -24,8 +24,8 @@ class CreateJobRequest(BaseModel):
     @field_validator("customer_name", "description", "location", "technician")
     @classmethod
     def validate_text_fields(cls, value: str) -> str:
-        if _has_control_or_format_characters(value):
-            raise ValueError("must not contain control or invisible formatting characters")
+        if _has_invisible_format_characters(value):
+            raise ValueError("must not contain invisible formatting characters")
         return value
 
 
