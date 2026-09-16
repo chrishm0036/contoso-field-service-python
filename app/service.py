@@ -1,8 +1,13 @@
 """Business logic and an intentionally process-local, in-memory store."""
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Optional
 
 from app.models import CreateJobRequest, Job
+
+
+class JobAlreadyCompletedError(Exception):
+    """Raised when an operator tries to complete a job that is already resolved."""
 
 
 class JobService:
@@ -25,6 +30,28 @@ class JobService:
             self._jobs[job.id] = job
             self._next_id += 1
             return job
+
+    def complete_job(self, job_id: int, completion_notes: Optional[str] = None) -> Optional[Job]:
+        """Resolve an open job. Returns None when the job does not exist.
+
+        Jobs are frozen, so completion replaces the stored record with a
+        revalidated copy rather than mutating it in place.
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            if job.status == "completed":
+                raise JobAlreadyCompletedError(f"Job {job_id} is already completed")
+            data = job.model_dump()
+            data.update(
+                status="completed",
+                completed_at=datetime.now(timezone.utc),
+                completion_notes=completion_notes,
+            )
+            completed = Job(**data)
+            self._jobs[job_id] = completed
+            return completed
 
     @classmethod
     def with_demo_data(cls) -> "JobService":

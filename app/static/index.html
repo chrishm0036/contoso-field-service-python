@@ -22,7 +22,7 @@
       <article class="metric"><div class="metric-label">Open jobs <span aria-hidden="true">↗</span></div><strong id="open-count">—</strong><p>Across all service locations</p></article>
       <article class="metric"><div class="metric-label">Critical / high priority <span class="urgent-icon" aria-hidden="true">!</span></div><strong id="priority-count">—</strong><p>Requiring your team's attention</p></article>
       <article class="metric"><div class="metric-label">Technicians assigned <span aria-hidden="true">◎</span></div><strong id="technician-count">—</strong><p>People keeping things running</p></article>
-      <article class="metric"><div class="metric-label">Completed <span aria-hidden="true">✓</span></div><strong id="completed-count">0</strong><p>Service jobs resolved</p></article>
+      <article class="metric"><div class="metric-label">Completed <span aria-hidden="true">✓</span></div><strong id="completed-count">—</strong><p>Service jobs resolved</p></article>
     </section>
     <section class="workspace" aria-labelledby="jobs-title">
       <div class="section-heading"><div><h2 id="jobs-title">Service jobs <span id="total-count" class="count">0</span></h2><p>A clear picture of every customer incident.</p></div><button id="refresh" class="refresh" type="button"><span aria-hidden="true">↻</span> Refresh</button></div>
@@ -38,7 +38,9 @@
       <div class="job-top"><span class="job-id"></span><span class="badge priority"></span></div>
       <p class="customer"></p><h3 class="description"></h3>
       <div class="job-details"><p><span class="detail-symbol" aria-hidden="true">⌖</span><span class="location"></span></p><p><span class="person-icon" aria-hidden="true">◉</span><span class="technician"></span></p></div>
-      <div class="job-bottom"><span class="status"><span class="dot"></span>Open</span><time class="created"></time></div>
+      <p class="completion-notes" hidden></p>
+      <div class="job-actions"><label class="notes-field"><span class="sr-only">Completion notes</span><input class="notes-input" type="text" maxlength="1000" placeholder="Completion notes (optional)"></label><button type="button" class="complete-button">Mark complete</button></div>
+      <div class="job-bottom"><span class="status"><span class="dot"></span><span class="status-label">Open</span></span><time class="created"></time></div>
     </article>
   </template>
 </body>

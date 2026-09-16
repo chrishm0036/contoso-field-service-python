@@ -12,6 +12,7 @@ function render() {
   byId("open-count").textContent = openJobs.length;
   byId("priority-count").textContent = openJobs.filter((job) => ["critical", "high"].includes(job.priority)).length;
   byId("technician-count").textContent = new Set(openJobs.map((job) => job.technician).filter((name) => name !== "Unassigned")).size;
+  byId("completed-count").textContent = jobs.filter((job) => job.status === "completed").length;
   byId("total-count").textContent = jobs.length;
   const query = byId("search").value.trim().toLowerCase();
   const visible = jobs.filter((job) =>
@@ -33,12 +34,48 @@ function render() {
     const time = card.querySelector("time");
     time.dateTime = job.created_at;
     time.textContent = dateFormat.format(new Date(job.created_at));
+
+    const article = card.querySelector(".job");
+    const isCompleted = job.status === "completed";
+    article.classList.toggle("completed", isCompleted);
+    set(".status-label", isCompleted ? "Completed" : "Open");
+    card.querySelector(".job-actions").hidden = isCompleted;
+    const notes = card.querySelector(".completion-notes");
+    notes.hidden = !job.completion_notes;
+    notes.textContent = job.completion_notes || "";
+    if (!isCompleted) {
+      const button = card.querySelector(".complete-button");
+      const input = card.querySelector(".notes-input");
+      button.addEventListener("click", () => completeJob(job.id, input.value, button));
+    }
     fragment.appendChild(card);
   });
   byId("jobs").replaceChildren(fragment);
   byId("results").textContent = `Showing ${visible.length} of ${jobs.length} jobs`;
   byId("notice").hidden = visible.length > 0;
   byId("notice").textContent = jobs.length ? "No jobs match your filters. Try another search or priority." : "No service jobs yet.";
+}
+
+async function completeJob(jobId, notes, button) {
+  const trimmed = notes.trim();
+  button.disabled = true;
+  button.textContent = "Completing…";
+  try {
+    const response = await fetch(`/jobs/${jobId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trimmed ? { completion_notes: trimmed } : {}),
+    });
+    if (!response.ok) throw new Error("Could not complete job");
+    const updated = await response.json();
+    jobs = jobs.map((job) => (job.id === updated.id ? updated : job));
+    render();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Mark complete";
+    byId("notice").hidden = false;
+    byId("notice").textContent = "Unable to complete that job. Try Refresh and repeat the action.";
+  }
 }
 
 async function loadJobs() {

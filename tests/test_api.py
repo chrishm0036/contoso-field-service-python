@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 from app import main
 from app.service import JobService
 
-
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(main, "service", JobService.with_demo_data())
@@ -55,3 +54,50 @@ def test_create_job(client):
 def test_invalid_create_leaves_store_unchanged(client, payload):
     assert client.post("/jobs", json=payload).status_code == 422
     assert len(client.get("/jobs").json()) == 6
+
+
+def test_complete_job_without_notes(client):
+    response = client.post("/jobs/1/complete")
+    assert response.status_code == 200
+    job = response.json()
+    assert job["status"] == "completed"
+    assert job["completion_notes"] is None
+    assert job["completed_at"] is not None
+    assert client.get("/jobs/1").json() == job
+
+
+def test_complete_job_with_notes(client):
+    response = client.post("/jobs/2/complete", json={"completion_notes": "  Replaced the reader  "})
+    assert response.status_code == 200
+    assert response.json()["completion_notes"] == "Replaced the reader"
+
+
+def test_completed_jobs_are_counted_in_listing(client):
+    client.post("/jobs/1/complete")
+    client.post("/jobs/2/complete")
+    jobs = client.get("/jobs").json()
+    assert len(jobs) == 6
+    assert sum(job["status"] == "completed" for job in jobs) == 2
+    assert sum(job["status"] == "open" for job in jobs) == 4
+
+
+def test_completing_twice_returns_conflict(client):
+    assert client.post("/jobs/3/complete").status_code == 200
+    conflict = client.post("/jobs/3/complete")
+    assert conflict.status_code == 409
+    assert client.get("/jobs/3").json()["status"] == "completed"
+
+
+def test_complete_unknown_job_returns_404(client):
+    assert client.post("/jobs/999/complete").status_code == 404
+
+
+@pytest.mark.parametrize("payload", [
+    {"completion_notes": "   "},
+    {"completion_notes": "x" * 1001},
+    {"completion_notes": 42},
+    {"unexpected": "value"},
+])
+def test_invalid_completion_leaves_job_open(client, payload):
+    assert client.post("/jobs/4/complete", json=payload).status_code == 422
+    assert client.get("/jobs/4").json()["status"] == "open"

@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.models import CreateJobRequest, Job
-from app.service import JobService
+from app.service import JobAlreadyCompletedError, JobService
 
 
 @pytest.fixture
@@ -101,3 +101,66 @@ def test_demo_data_is_populated_and_isolated():
     assert {job.priority for job in first.list_jobs()} == {"normal", "high", "critical"}
     first.create_job(CreateJobRequest(customer_name="New", description="Issue"))
     assert len(second.list_jobs()) == 6
+
+
+def test_complete_job_sets_status_and_timestamp(service, request_data):
+    job = service.create_job(request_data)
+    completed = service.complete_job(job.id, "Swapped the failed unit")
+    assert completed.status == "completed"
+    assert completed.completion_notes == "Swapped the failed unit"
+    assert completed.completed_at >= job.created_at
+    assert completed.completed_at.utcoffset().total_seconds() == 0
+
+
+def test_complete_job_replaces_the_stored_record(service, request_data):
+    job = service.create_job(request_data)
+    completed = service.complete_job(job.id)
+    assert service.get_job(job.id) == completed
+    assert service.get_job(job.id).status == "completed"
+    assert job.status == "open"
+
+
+def test_complete_job_preserves_original_fields(service, request_data):
+    job = service.create_job(request_data)
+    completed = service.complete_job(job.id)
+    assert (completed.id, completed.customer_name, completed.description) == (job.id, job.customer_name, job.description)
+    assert (completed.priority, completed.location, completed.technician) == (job.priority, job.location, job.technician)
+    assert completed.created_at == job.created_at
+
+
+def test_complete_job_without_notes_leaves_them_empty(service, request_data):
+    completed = service.complete_job(service.create_job(request_data).id)
+    assert completed.completion_notes is None
+
+
+def test_complete_unknown_job_returns_none(service):
+    assert service.complete_job(999) is None
+
+
+def test_completing_twice_raises(service, request_data):
+    job = service.create_job(request_data)
+    service.complete_job(job.id)
+    with pytest.raises(JobAlreadyCompletedError):
+        service.complete_job(job.id)
+
+
+def test_completed_job_cannot_be_mutated(service, request_data):
+    completed = service.complete_job(service.create_job(request_data).id)
+    with pytest.raises(ValidationError):
+        completed.status = "open"
+
+
+@pytest.mark.parametrize("notes", ["   ", "x" * 1001])
+def test_invalid_completion_notes_are_rejected(service, request_data, notes):
+    job = service.create_job(request_data)
+    with pytest.raises(ValidationError):
+        service.complete_job(job.id, notes)
+    assert service.get_job(job.id).status == "open"
+
+
+def test_completing_one_job_does_not_affect_others(service, request_data):
+    first = service.create_job(request_data)
+    second = service.create_job(request_data)
+    service.complete_job(first.id)
+    assert service.get_job(second.id).status == "open"
+    assert sum(job.status == "completed" for job in service.list_jobs()) == 1
