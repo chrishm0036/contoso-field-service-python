@@ -51,8 +51,8 @@ class JobService:
         return None if job is None else self._with_sla(job, current_time=current_time)
 
     def create_job(self, request: CreateJobRequest) -> Job:
-        current_time = self._now()
         with self._lock:
+            current_time = self._now()
             job = Job(
                 id=self._next_id,
                 created_at=current_time,

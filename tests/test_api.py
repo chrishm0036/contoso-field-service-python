@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
-import shutil
 import subprocess
 
 import pytest
@@ -92,10 +91,6 @@ def test_job_list_reports_breached_sla(monkeypatch):
 
 
 def test_dashboard_sla_text_formatting():
-    node = shutil.which("node")
-    if node is None:
-        pytest.skip("Node.js is not available")
-
     script = """
 const { formatSla } = require('./app/static/app.js');
 process.stdout.write(JSON.stringify([
@@ -105,7 +100,7 @@ process.stdout.write(JSON.stringify([
 ]));
 """
     result = subprocess.run(
-        [node, "-e", script],
+        ["node", "-e", script],
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,
