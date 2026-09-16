@@ -62,7 +62,9 @@ def test_create_job_with_default_optional_fields(client):
     {"customer_name": "Customer", "description": "Issue", "priority": "urgent"},
     {"customer_name": "Customer", "description": "Issue", "status": "closed"},
     {"customer_name": "\u200b", "description": "Issue"},
+    {"customer_name": "Customer", "description": "Issue\u202e cod.exe"},
     {"customer_name": "Customer", "description": "Issue", "location": "Madrid\u2066Floor 2"},
+    {"customer_name": "Customer", "description": "Issue", "technician": "Elena\ufeffOps"},
 ])
 def test_invalid_create_leaves_store_unchanged(client, payload):
     assert client.post("/jobs", json=payload).status_code == 422
