@@ -13,7 +13,7 @@ def _has_invisible_format_characters(value: str) -> bool:
 
 
 class CreateJobRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid", validate_default=True)
 
     customer_name: str = Field(min_length=1, max_length=120)
     description: str = Field(min_length=1, max_length=1000)
