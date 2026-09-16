@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from pydantic import ValidationError
 
-from app.models import CreateJobRequest, Job, JobWithSla
+from app.models import CreateJobRequest, Job
 from app.service import JobService
 
 
@@ -21,7 +21,7 @@ def request_data():
 
 def test_create_job(service, request_data):
     job = service.create_job(request_data)
-    assert isinstance(job, JobWithSla)
+    assert isinstance(job, Job)
     assert job.id == 1
     assert job.customer_name == "Contoso Madrid"
     assert job.description == "Cooling alert"

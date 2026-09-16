@@ -1,6 +1,6 @@
 """Validated API and domain models."""
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,8 +24,5 @@ class Job(CreateJobRequest):
     id: int = Field(gt=0)
     status: Literal["open"] = "open"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class JobWithSla(Job):
-    sla_status: SlaStatus
-    sla_remaining_seconds: int
+    sla_status: Optional[SlaStatus] = None
+    sla_remaining_seconds: Optional[int] = None

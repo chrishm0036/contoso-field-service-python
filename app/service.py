@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Callable, Optional
 
-from app.models import CreateJobRequest, Job, JobWithSla, Priority
+from app.models import CreateJobRequest, Job, Priority
 
 
 class JobService:
@@ -29,26 +29,26 @@ class JobService:
     def _sla_target(cls, priority: Priority) -> timedelta:
         return cls.SLA_TARGETS[priority]
 
-    def _with_sla(self, job: Job, current_time: Optional[datetime] = None) -> JobWithSla:
+    def _with_sla(self, job: Job, current_time: Optional[datetime] = None) -> Job:
         remaining = job.created_at + self._sla_target(job.priority) - (current_time or self._now())
         remaining_seconds = int(remaining.total_seconds())
-        return JobWithSla(
-            **job.model_dump(),
+        return Job(
+            **job.model_dump(exclude={"sla_status", "sla_remaining_seconds"}),
             sla_status="within_sla" if remaining_seconds >= 0 else "breached",
             sla_remaining_seconds=remaining_seconds,
         )
 
-    def list_jobs(self) -> list[JobWithSla]:
+    def list_jobs(self) -> list[Job]:
         with self._lock:
             jobs = list(self._jobs.values())
         return [self._with_sla(job) for job in jobs]
 
-    def get_job(self, job_id: int) -> Optional[JobWithSla]:
+    def get_job(self, job_id: int) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
         return None if job is None else self._with_sla(job)
 
-    def create_job(self, request: CreateJobRequest) -> JobWithSla:
+    def create_job(self, request: CreateJobRequest) -> Job:
         current_time = self._now()
         with self._lock:
             job = Job(id=self._next_id, created_at=current_time, **request.model_dump())
