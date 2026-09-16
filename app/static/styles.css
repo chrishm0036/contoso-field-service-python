@@ -500,6 +500,7 @@ h2 {
 
 .notice-action:focus-visible {
   background:#eef4f0;
+  outline:3px solid #168575;
   outline-offset:3px;
 }
 
