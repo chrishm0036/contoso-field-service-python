@@ -24,5 +24,5 @@ class Job(CreateJobRequest):
     id: int = Field(gt=0)
     status: Literal["open"] = "open"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    sla_status: SlaStatus
-    sla_remaining_seconds: int
+    sla_status: SlaStatus = "within_sla"
+    sla_remaining_seconds: int = 0

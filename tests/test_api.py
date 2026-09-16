@@ -1,4 +1,8 @@
 from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
+import shutil
+import subprocess
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +10,8 @@ from fastapi.testclient import TestClient
 from app import main
 from app.models import CreateJobRequest
 from app.service import JobService
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -83,6 +89,34 @@ def test_job_list_reports_breached_sla(monkeypatch):
     assert response.status_code == 200
     assert response.json()[0]["sla_status"] == "breached"
     assert response.json()[0]["sla_remaining_seconds"] == -60
+
+
+def test_dashboard_sla_text_formatting():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is not available")
+
+    script = """
+const { formatSla } = require('./app/static/app.js');
+process.stdout.write(JSON.stringify([
+  formatSla({ sla_status: 'within_sla', sla_remaining_seconds: 3600 }),
+  formatSla({ sla_status: 'breached', sla_remaining_seconds: -300 }),
+  formatSla({})
+]));
+"""
+    result = subprocess.run(
+        [node, "-e", script],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert json.loads(result.stdout) == [
+        "SLA: Within SLA · 1h left",
+        "SLA: Breached · 5m overdue",
+        "SLA: Unavailable",
+    ]
 
 
 @pytest.mark.parametrize("payload", [

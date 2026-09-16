@@ -8,12 +8,15 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
 });
 
 function formatSla(job) {
+  if (!["within_sla", "breached"].includes(job.sla_status) || !Number.isFinite(job.sla_remaining_seconds)) {
+    return "SLA: Unavailable";
+  }
   const totalSeconds = Math.abs(job.sla_remaining_seconds);
   const totalMinutes = Math.ceil(totalSeconds / 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const amount = hours && minutes ? `${hours}h ${minutes}m` : hours ? `${hours}h` : `${minutes}m`;
-  return job.sla_status === "within_sla" ? `Within SLA · ${amount} left` : `Breached · ${amount} overdue`;
+  return job.sla_status === "within_sla" ? `SLA: Within SLA · ${amount} left` : `SLA: Breached · ${amount} overdue`;
 }
 
 function render() {
@@ -70,15 +73,21 @@ async function loadJobs() {
   }
 }
 
-document.querySelectorAll("[data-priority]").forEach((button) => {
-  button.addEventListener("click", () => {
-    selectedPriority = button.dataset.priority;
-    document.querySelectorAll("[data-priority]").forEach((item) => {
-      item.setAttribute("aria-pressed", String(item === button));
+if (typeof document !== "undefined") {
+  document.querySelectorAll("[data-priority]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedPriority = button.dataset.priority;
+      document.querySelectorAll("[data-priority]").forEach((item) => {
+        item.setAttribute("aria-pressed", String(item === button));
+      });
+      render();
     });
-    render();
   });
-});
-byId("search").addEventListener("input", render);
-byId("refresh").addEventListener("click", loadJobs);
-loadJobs();
+  byId("search").addEventListener("input", render);
+  byId("refresh").addEventListener("click", loadJobs);
+  loadJobs();
+}
+
+if (typeof module !== "undefined") {
+  module.exports = { formatSla };
+}
