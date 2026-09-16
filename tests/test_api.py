@@ -70,6 +70,21 @@ def test_job_detail_reports_breached_sla(monkeypatch):
     assert response.json()["sla_remaining_seconds"] == -60
 
 
+def test_job_list_reports_breached_sla(monkeypatch):
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    service = JobService(now_provider=lambda: current_time)
+    service.create_job(CreateJobRequest(customer_name="Customer", description="Issue", priority="critical"))
+    current_time = current_time + timedelta(hours=1, minutes=1)
+    monkeypatch.setattr(main, "service", service)
+
+    with TestClient(main.app) as client:
+        response = client.get("/jobs")
+
+    assert response.status_code == 200
+    assert response.json()[0]["sla_status"] == "breached"
+    assert response.json()[0]["sla_remaining_seconds"] == -60
+
+
 @pytest.mark.parametrize("payload", [
     {}, {"customer_name": " ", "description": "Issue"},
     {"customer_name": "Customer", "description": "Issue", "priority": "urgent"},

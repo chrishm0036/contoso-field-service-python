@@ -39,14 +39,16 @@ class JobService:
         )
 
     def list_jobs(self) -> list[Job]:
+        current_time = self._now()
         with self._lock:
             jobs = list(self._jobs.values())
-        return [self._with_sla(job) for job in jobs]
+        return [self._with_sla(job, current_time=current_time) for job in jobs]
 
     def get_job(self, job_id: int) -> Optional[Job]:
+        current_time = self._now()
         with self._lock:
             job = self._jobs.get(job_id)
-        return None if job is None else self._with_sla(job)
+        return None if job is None else self._with_sla(job, current_time=current_time)
 
     def create_job(self, request: CreateJobRequest) -> Job:
         current_time = self._now()
