@@ -1,7 +1,7 @@
 """Thin HTTP routes and static dashboard hosting."""
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Path as PathParam
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -30,7 +30,7 @@ def list_jobs():
 
 
 @app.get("/jobs/{job_id}", response_model=Job)
-def get_job(job_id: int):
+def get_job(job_id: int = PathParam(gt=0)):
     job = service.get_job(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")

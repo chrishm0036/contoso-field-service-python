@@ -31,6 +31,8 @@ def test_seeded_jobs_and_detail(client):
     assert all(job["status"] == "open" for job in jobs)
     assert client.get("/jobs/1").json() == jobs[0]
     assert client.get("/jobs/999").status_code == 404
+    assert client.get("/jobs/0").status_code == 422
+    assert client.get("/jobs/-1").status_code == 422
     assert client.get("/jobs/not-an-id").status_code == 422
 
 
