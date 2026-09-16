@@ -6,10 +6,11 @@ from app.service import JobService
 
 
 @pytest.fixture
-def client(monkeypatch):
-    monkeypatch.setattr(main, "service", JobService.with_demo_data())
+def client():
+    main.app.dependency_overrides[main.get_service] = JobService.with_demo_data
     with TestClient(main.app) as client:
         yield client
+    main.app.dependency_overrides.clear()
 
 
 def test_dashboard_health_and_docs(client):
