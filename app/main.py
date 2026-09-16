@@ -1,7 +1,7 @@
 """Thin HTTP routes and static dashboard hosting."""
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -27,6 +27,15 @@ def health():
 @app.get("/jobs", response_model=list[Job])
 def list_jobs():
     return service.list_jobs()
+
+
+@app.get("/jobs/export")
+def export_jobs():
+    return Response(
+        content=service.export_jobs_csv(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="jobs.csv"'},
+    )
 
 
 @app.get("/jobs/{job_id}", response_model=Job)

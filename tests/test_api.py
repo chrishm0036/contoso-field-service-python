@@ -34,6 +34,19 @@ def test_seeded_jobs_and_detail(client):
     assert client.get("/jobs/not-an-id").status_code == 422
 
 
+def test_export_jobs_returns_csv_download(client):
+    response = client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert response.headers["content-disposition"] == 'attachment; filename="jobs.csv"'
+    lines = response.text.splitlines()
+    assert lines[0] == "ID,customer,description,priority,status"
+    assert lines[1] == (
+        "1,Contoso Madrid,Server room cooling alert,critical,open"
+    )
+
+
 def test_create_job(client):
     response = client.post("/jobs", json={
         "customer_name": "Test customer", "description": "New incident",
