@@ -1,10 +1,15 @@
 """Validated API and domain models."""
 from datetime import datetime, timezone
+import unicodedata
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Priority = Literal["normal", "high", "critical"]
+
+
+def _has_control_or_format_characters(value: str) -> bool:
+    return any(unicodedata.category(character).startswith("C") for character in value)
 
 
 class CreateJobRequest(BaseModel):
@@ -15,6 +20,13 @@ class CreateJobRequest(BaseModel):
     priority: Priority = "normal"
     location: str = Field(default="Unspecified", min_length=1, max_length=180)
     technician: str = Field(default="Unassigned", min_length=1, max_length=120)
+
+    @field_validator("customer_name", "description", "location", "technician")
+    @classmethod
+    def validate_text_fields(cls, value: str) -> str:
+        if _has_control_or_format_characters(value):
+            raise ValueError("must not contain control or invisible formatting characters")
+        return value
 
 
 class Job(CreateJobRequest):
