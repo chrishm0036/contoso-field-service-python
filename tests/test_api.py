@@ -47,6 +47,16 @@ def test_create_job(client):
     assert len(client.get("/jobs").json()) == 7
 
 
+def test_create_job_with_default_optional_fields(client):
+    response = client.post("/jobs", json={
+        "customer_name": "Test customer", "description": "New incident",
+    })
+    assert response.status_code == 201
+    job = response.json()
+    assert job["location"] == "Unspecified"
+    assert job["technician"] == "Unassigned"
+
+
 @pytest.mark.parametrize("payload", [
     {}, {"customer_name": " ", "description": "Issue"},
     {"customer_name": "Customer", "description": "Issue", "priority": "urgent"},
