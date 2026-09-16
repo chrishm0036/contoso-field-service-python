@@ -2,14 +2,21 @@
 
 let jobs = [];
 let selectedPriority = "all";
+let noticeAnnouncementTimeout = 0;
 const byId = (id) => document.getElementById(id);
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
 });
 
 function setNotice(title, body, showClearFilters) {
+  const announcement = byId("notice-announcement");
+  const message = `${title}. ${body}`;
   byId("notice").hidden = false;
-  byId("notice-announcement").textContent = `${title}. ${body}`;
+  window.clearTimeout(noticeAnnouncementTimeout);
+  announcement.textContent = "";
+  noticeAnnouncementTimeout = window.setTimeout(() => {
+    announcement.textContent = message;
+  }, 0);
   byId("notice-title").textContent = title;
   byId("notice-body").textContent = body;
   byId("clear-filters").hidden = !showClearFilters;

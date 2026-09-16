@@ -502,6 +502,7 @@ h2 {
   border-radius:999px;
   background:#fff;
   color:#244b36;
+  cursor:pointer;
   font-size:14px;
   font-weight:650;
 }
@@ -514,6 +515,10 @@ h2 {
   background:#eef4f0;
   outline:3px solid #168575;
   outline-offset:3px;
+}
+
+.notice-action[hidden] {
+  display:none;
 }
 
 .page-footer {
