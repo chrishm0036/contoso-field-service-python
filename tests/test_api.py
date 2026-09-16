@@ -7,7 +7,8 @@ from app.service import JobService
 
 @pytest.fixture
 def client():
-    main.app.dependency_overrides[main.get_service] = JobService.with_demo_data
+    test_service = JobService.with_demo_data()
+    main.app.dependency_overrides[main.get_service] = lambda: test_service
     with TestClient(main.app) as client:
         yield client
     main.app.dependency_overrides.clear()
