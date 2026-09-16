@@ -498,6 +498,11 @@ h2 {
   background:#eef4f0;
 }
 
+.notice-action:focus-visible {
+  background:#eef4f0;
+  outline-offset:3px;
+}
+
 .page-footer {
   display:flex;
   align-items:center;
