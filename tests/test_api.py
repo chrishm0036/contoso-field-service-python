@@ -47,6 +47,22 @@ def test_export_jobs_returns_csv_download(client):
     )
 
 
+def test_export_jobs_escapes_csv_values(client):
+    create_response = client.post("/jobs", json={
+        "customer_name": "Contoso, Inc.",
+        "description": 'Needs "urgent" follow-up',
+        "priority": "high",
+        "location": "Madrid",
+        "technician": "Elena",
+    })
+    assert create_response.status_code == 201
+
+    response = client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert '"Contoso, Inc.","Needs ""urgent"" follow-up",high,open' in response.text
+
+
 def test_create_job(client):
     response = client.post("/jobs", json={
         "customer_name": "Test customer", "description": "New incident",
