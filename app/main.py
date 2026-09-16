@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.models import CreateJobRequest, Job
+from app.models import CreateJobRequest, JobWithSla
 from app.service import JobService
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -24,12 +24,12 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/jobs", response_model=list[Job])
+@app.get("/jobs", response_model=list[JobWithSla])
 def list_jobs():
     return service.list_jobs()
 
 
-@app.get("/jobs/{job_id}", response_model=Job)
+@app.get("/jobs/{job_id}", response_model=JobWithSla)
 def get_job(job_id: int):
     job = service.get_job(job_id)
     if job is None:
@@ -37,6 +37,6 @@ def get_job(job_id: int):
     return job
 
 
-@app.post("/jobs", response_model=Job, status_code=201)
+@app.post("/jobs", response_model=JobWithSla, status_code=201)
 def create_job(request: CreateJobRequest):
     return service.create_job(request)

@@ -1,13 +1,17 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app import main
+from app.models import CreateJobRequest
 from app.service import JobService
 
 
 @pytest.fixture
 def client(monkeypatch):
-    monkeypatch.setattr(main, "service", JobService.with_demo_data())
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(main, "service", JobService.with_demo_data(now_provider=lambda: current_time))
     with TestClient(main.app) as client:
         yield client
 
@@ -29,6 +33,8 @@ def test_seeded_jobs_and_detail(client):
     jobs = response.json()
     assert len(jobs) == 6
     assert all(job["status"] == "open" for job in jobs)
+    assert all(job["sla_status"] in {"within_sla", "breached"} for job in jobs)
+    assert all(isinstance(job["sla_remaining_seconds"], int) for job in jobs)
     assert client.get("/jobs/1").json() == jobs[0]
     assert client.get("/jobs/999").status_code == 404
     assert client.get("/jobs/not-an-id").status_code == 422
@@ -43,8 +49,25 @@ def test_create_job(client):
     job = response.json()
     assert job["id"] == 7
     assert job["status"] == "open"
+    assert job["sla_status"] == "within_sla"
+    assert job["sla_remaining_seconds"] == 4 * 60 * 60
     assert client.get("/jobs/7").json() == job
     assert len(client.get("/jobs").json()) == 7
+
+
+def test_job_detail_reports_breached_sla(monkeypatch):
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    service = JobService(now_provider=lambda: current_time)
+    created = service.create_job(CreateJobRequest(customer_name="Customer", description="Issue", priority="critical"))
+    current_time = current_time + timedelta(hours=1, minutes=1)
+    monkeypatch.setattr(main, "service", service)
+
+    with TestClient(main.app) as client:
+        response = client.get(f"/jobs/{created.id}")
+
+    assert response.status_code == 200
+    assert response.json()["sla_status"] == "breached"
+    assert response.json()["sla_remaining_seconds"] == -60
 
 
 @pytest.mark.parametrize("payload", [
