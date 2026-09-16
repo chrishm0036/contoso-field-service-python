@@ -83,7 +83,7 @@ def test_input_is_trimmed():
 
 def test_invalid_status(request_data):
     with pytest.raises(ValidationError):
-        Job(id=1, status="invalid", **request_data.model_dump())
+        Job(id=1, status="invalid", sla_status="within_sla", sla_remaining_seconds=60, **request_data.model_dump())
 
 
 def test_stored_job_cannot_be_mutated(service, request_data):

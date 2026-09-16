@@ -51,10 +51,16 @@ class JobService:
     def create_job(self, request: CreateJobRequest) -> Job:
         current_time = self._now()
         with self._lock:
-            job = Job(id=self._next_id, created_at=current_time, **request.model_dump())
+            job = Job(
+                id=self._next_id,
+                created_at=current_time,
+                sla_status="within_sla",
+                sla_remaining_seconds=int(self._sla_target(request.priority).total_seconds()),
+                **request.model_dump(),
+            )
             self._jobs[job.id] = job
             self._next_id += 1
-        return self._with_sla(job, current_time=current_time)
+        return job
 
     @classmethod
     def with_demo_data(cls, now_provider: Optional[Callable[[], datetime]] = None) -> "JobService":
