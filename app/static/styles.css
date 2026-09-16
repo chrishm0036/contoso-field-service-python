@@ -456,15 +456,46 @@ h2 {
 }
 
 .notice {
-  padding:20px;
-  background:#eaf0eb;
-  border-radius:8px;
+  padding:24px;
+  background:#f7faf8;
+  border:1px dashed #c9d7cd;
+  border-radius:12px;
   color:#45624f;
-  font-size:14px;
+  text-align:center;
 }
 
 .notice[hidden] {
   display:none;
+}
+
+.notice-title {
+  margin:0;
+  font-size:18px;
+  font-weight:650;
+  color:#244b36;
+}
+
+.notice-body {
+  margin:10px auto 0;
+  max-width:34rem;
+  font-size:14px;
+  line-height:1.5;
+  color:#5f7466;
+}
+
+.notice-action {
+  margin-top:16px;
+  padding:10px 16px;
+  border:1px solid #c6d5ca;
+  border-radius:999px;
+  background:#fff;
+  color:#244b36;
+  font-size:12px;
+  font-weight:650;
+}
+
+.notice-action:hover {
+  background:#eef4f0;
 }
 
 .page-footer {
