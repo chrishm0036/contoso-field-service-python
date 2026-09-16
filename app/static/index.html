@@ -28,7 +28,8 @@
       <div class="section-heading"><div><h2 id="jobs-title">Service jobs <span id="total-count" class="count">0</span></h2><p>A clear picture of every customer incident.</p></div><button id="refresh" class="refresh" type="button"><span aria-hidden="true">↻</span> Refresh</button></div>
       <div class="toolbar"><div class="filters" role="group" aria-label="Filter by priority"><button type="button" data-priority="all" aria-pressed="true">All jobs</button><button type="button" data-priority="critical" aria-pressed="false">Critical</button><button type="button" data-priority="high" aria-pressed="false">High</button><button type="button" data-priority="normal" aria-pressed="false">Normal</button></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search jobs, customers, people…" aria-label="Search jobs, customers, or technicians"></label></div>
       <div id="notice" class="notice">
-        <div class="notice-copy" role="status" aria-live="polite">
+        <p id="notice-announcement" class="visually-hidden" role="status" aria-live="polite"></p>
+        <div class="notice-copy">
           <p id="notice-title" class="notice-title">Loading service jobs…</p>
           <p id="notice-body" class="notice-body">Please wait while the dashboard refreshes.</p>
         </div>

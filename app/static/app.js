@@ -9,6 +9,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
 
 function setNotice(title, body, showClearFilters) {
   byId("notice").hidden = false;
+  byId("notice-announcement").textContent = `${title}. ${body}`;
   byId("notice-title").textContent = title;
   byId("notice-body").textContent = body;
   byId("clear-filters").hidden = !showClearFilters;
