@@ -135,13 +135,29 @@ h1 {
   display:flex;
   align-items:center;
   gap:9px;
-  color:#2d6c50;
-  background:#e8f1e9;
-  border:1px solid #d2e3d7;
   border-radius:30px;
   padding:10px 14px;
   font-size:12px;
   font-weight:600;
+  transition:background-color .2s,border-color .2s,color .2s;
+}
+
+.live.is-connecting {
+  color:#8b5f12;
+  background:#fff6e5;
+  border:1px solid #eedeb8;
+}
+
+.live.is-live {
+  color:#2d6c50;
+  background:#e8f1e9;
+  border:1px solid #d2e3d7;
+}
+
+.live.is-error {
+  color:#a63f35;
+  background:#fbeceb;
+  border:1px solid #efcdc8;
 }
 
 .dot {

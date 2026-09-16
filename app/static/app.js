@@ -3,9 +3,16 @@
 let jobs = [];
 let selectedPriority = "all";
 const byId = (id) => document.getElementById(id);
+const connectionStatus = document.querySelector(".live");
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
 });
+
+function setConnectionState(text, stateClass) {
+  byId("connection").textContent = text;
+  connectionStatus.classList.remove("is-connecting", "is-live", "is-error");
+  connectionStatus.classList.add(stateClass);
+}
 
 function render() {
   const openJobs = jobs.filter((job) => job.status === "open");
@@ -43,15 +50,15 @@ function render() {
 
 async function loadJobs() {
   byId("refresh").disabled = true;
-  byId("connection").textContent = "Connecting";
+  setConnectionState("Connecting", "is-connecting");
   try {
     const response = await fetch("/jobs", { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load jobs");
     jobs = await response.json();
     render();
-    byId("connection").textContent = "Operations Live";
+    setConnectionState("Operations Live", "is-live");
   } catch (error) {
-    byId("connection").textContent = "Connection unavailable";
+    setConnectionState("Connection unavailable", "is-error");
     byId("notice").hidden = false;
     byId("notice").textContent = "Unable to refresh service jobs. Check your connection and try Refresh.";
     byId("results").textContent = jobs.length ? "Showing previously loaded jobs" : "Jobs unavailable";
