@@ -63,6 +63,8 @@ def test_supported_priorities(service, priority):
     ("customer_name", "   "), ("description", ""), ("location", " "),
     ("technician", ""), ("priority", "urgent"), ("customer_name", "x" * 121),
     ("description", "x" * 1001), ("location", "x" * 181), ("technician", "x" * 121),
+    ("customer_name", "\u200b"), ("description", "Issue\u202e cod.exe"),
+    ("location", "Madrid\u2066Floor 2"), ("technician", "Elena\ufeffOps"),
     ("status", "closed"), ("unexpected", "value"),
 ])
 def test_invalid_input(field, value):
