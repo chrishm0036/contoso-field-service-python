@@ -9,6 +9,12 @@ from app.models import CreateJobRequest, Job
 from app.service import JobService
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+class CSVResponse(Response):
+    media_type = "text/csv"
+
+
 app = FastAPI(title="Contoso Field Service API", version="1.0.0")
 service = JobService.with_demo_data()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -29,9 +35,9 @@ def list_jobs():
     return service.list_jobs()
 
 
-@app.get("/jobs/export")
+@app.get("/jobs/export", response_class=CSVResponse)
 def export_jobs():
-    return Response(
+    return CSVResponse(
         content=service.export_jobs_csv(),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="jobs.csv"'},
