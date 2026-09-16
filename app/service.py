@@ -26,6 +26,16 @@ class JobService:
             self._next_id += 1
             return job
 
+    def complete_job(self, job_id: int) -> Optional[Job]:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            if job.status == "open":
+                job = job.model_copy(update={"status": "completed"})
+                self._jobs[job_id] = job
+            return job
+
     @classmethod
     def with_demo_data(cls) -> "JobService":
         service = cls()

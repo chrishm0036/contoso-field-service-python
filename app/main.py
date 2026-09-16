@@ -40,3 +40,11 @@ def get_job(job_id: int):
 @app.post("/jobs", response_model=Job, status_code=201)
 def create_job(request: CreateJobRequest):
     return service.create_job(request)
+
+
+@app.patch("/jobs/{job_id}/complete", response_model=Job)
+def complete_job(job_id: int):
+    job = service.complete_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job

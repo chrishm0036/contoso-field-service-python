@@ -1,3 +1,4 @@
+"""Service-layer tests for job storage and business transitions."""
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -36,6 +37,26 @@ def test_get_existing_job(service, request_data):
 
 def test_get_unknown_job_returns_none(service):
     assert service.get_job(999) is None
+
+
+def test_complete_job_updates_stored_status(service, request_data):
+    job = service.create_job(request_data)
+
+    completed = service.complete_job(job.id)
+
+    assert completed.status == "completed"
+    assert service.get_job(job.id) == completed
+
+
+def test_complete_job_is_idempotent(service, request_data):
+    job = service.create_job(request_data)
+    completed = service.complete_job(job.id)
+
+    assert service.complete_job(job.id) == completed
+
+
+def test_complete_unknown_job_returns_none(service):
+    assert service.complete_job(999) is None
 
 
 def test_jobs_receive_sequential_ids(service, request_data):

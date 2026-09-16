@@ -1,5 +1,7 @@
 "use strict";
 
+// Loads, filters, renders, and completes jobs from the dashboard.
+
 let jobs = [];
 let selectedPriority = "all";
 const byId = (id) => document.getElementById(id);
@@ -7,11 +9,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
   month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
 });
 
+// Rebuild the metrics and cards from the latest local job state.
 function render() {
   const openJobs = jobs.filter((job) => job.status === "open");
   byId("open-count").textContent = openJobs.length;
   byId("priority-count").textContent = openJobs.filter((job) => ["critical", "high"].includes(job.priority)).length;
   byId("technician-count").textContent = new Set(openJobs.map((job) => job.technician).filter((name) => name !== "Unassigned")).size;
+  byId("completed-count").textContent = jobs.filter((job) => job.status === "completed").length;
   byId("total-count").textContent = jobs.length;
   const query = byId("search").value.trim().toLowerCase();
   const visible = jobs.filter((job) =>
@@ -33,6 +37,13 @@ function render() {
     const time = card.querySelector("time");
     time.dateTime = job.created_at;
     time.textContent = dateFormat.format(new Date(job.created_at));
+    const status = card.querySelector(".status");
+    status.classList.toggle("completed", job.status === "completed");
+    status.querySelector(".status-label").textContent = job.status === "completed" ? "Completed" : "Open";
+    const completeButton = card.querySelector(".complete-job");
+    completeButton.dataset.jobId = job.id;
+    completeButton.disabled = job.status === "completed";
+    completeButton.textContent = job.status === "completed" ? "Completed" : "Complete";
     fragment.appendChild(card);
   });
   byId("jobs").replaceChildren(fragment);
@@ -41,8 +52,16 @@ function render() {
   byId("notice").textContent = jobs.length ? "No jobs match your filters. Try another search or priority." : "No service jobs yet.";
 }
 
+function setJobActionsBusy(isBusy) {
+  document.querySelectorAll(".complete-job").forEach((button) => {
+    if (button.textContent !== "Completed") button.disabled = isBusy;
+  });
+}
+
+// Refresh all jobs while preserving the previous view if the request fails.
 async function loadJobs() {
   byId("refresh").disabled = true;
+  setJobActionsBusy(true);
   byId("connection").textContent = "Connecting";
   try {
     const response = await fetch("/jobs", { cache: "no-store" });
@@ -55,6 +74,31 @@ async function loadJobs() {
     byId("notice").hidden = false;
     byId("notice").textContent = "Unable to refresh service jobs. Check your connection and try Refresh.";
     byId("results").textContent = jobs.length ? "Showing previously loaded jobs" : "Jobs unavailable";
+  } finally {
+    byId("refresh").disabled = false;
+    setJobActionsBusy(false);
+  }
+}
+
+// Complete one job and replace its local snapshot with the API response.
+async function completeJob(jobId, button) {
+  button.disabled = true;
+  button.textContent = "Completing…";
+  byId("refresh").disabled = true;
+  byId("action-status").textContent = "";
+  try {
+    const response = await fetch(`/jobs/${jobId}/complete`, { method: "PATCH" });
+    if (!response.ok) throw new Error("Could not complete job");
+    const completedJob = await response.json();
+    jobs = jobs.map((job) => job.id === completedJob.id ? completedJob : job);
+    render();
+    byId("action-status").textContent = `JOB-${String(jobId).padStart(4, "0")} completed.`;
+    document.querySelector(`.complete-job[data-job-id="${jobId}"]`).closest(".job").querySelector(".status").focus();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Complete";
+    byId("notice").hidden = false;
+    byId("notice").textContent = "Unable to complete this job. Try again.";
   } finally {
     byId("refresh").disabled = false;
   }
@@ -71,4 +115,8 @@ document.querySelectorAll("[data-priority]").forEach((button) => {
 });
 byId("search").addEventListener("input", render);
 byId("refresh").addEventListener("click", loadJobs);
+byId("jobs").addEventListener("click", (event) => {
+  const button = event.target.closest(".complete-job");
+  if (button && !button.disabled) completeJob(Number(button.dataset.jobId), button);
+});
 loadJobs();
