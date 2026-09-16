@@ -9,7 +9,7 @@ Priority = Literal["normal", "high", "critical"]
 
 
 def _has_control_or_format_characters(value: str) -> bool:
-    return any(unicodedata.category(character).startswith("C") for character in value)
+    return any(unicodedata.category(character) in {"Cc", "Cf"} for character in value)
 
 
 class CreateJobRequest(BaseModel):
