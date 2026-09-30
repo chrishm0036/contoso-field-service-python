@@ -1,4 +1,6 @@
 """Business logic and an intentionally process-local, in-memory store."""
+import csv
+from io import StringIO
 from threading import Lock
 from typing import Optional
 
@@ -25,6 +27,23 @@ class JobService:
             self._jobs[job.id] = job
             self._next_id += 1
             return job
+
+    def export_jobs_csv(self) -> str:
+        with self._lock:
+            jobs = list(self._jobs.values())
+
+        output = StringIO(newline="")
+        writer = csv.writer(output)
+        writer.writerow(["ID", "customer", "description", "priority", "status"])
+        for job in jobs:
+            writer.writerow([
+                job.id,
+                job.customer_name,
+                job.description,
+                job.priority,
+                job.status,
+            ])
+        return output.getvalue()
 
     @classmethod
     def with_demo_data(cls) -> "JobService":

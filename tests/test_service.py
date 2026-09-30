@@ -1,4 +1,6 @@
+import csv
 from concurrent.futures import ThreadPoolExecutor
+from io import StringIO
 
 import pytest
 from pydantic import ValidationError
@@ -48,6 +50,32 @@ def test_list_jobs(service, request_data):
     assert service.list_jobs() == jobs
     service.list_jobs().clear()
     assert service.list_jobs() == jobs
+
+
+def test_export_jobs_csv_includes_header_and_rows(service):
+    first = service.create_job(CreateJobRequest(customer_name="Contoso", description="Cooling alert"))
+    second = service.create_job(CreateJobRequest(
+        customer_name="Fabrikam", description="Badge reader offline", priority="high",
+    ))
+
+    rows = list(csv.reader(StringIO(service.export_jobs_csv())))
+
+    assert rows == [
+        ["ID", "customer", "description", "priority", "status"],
+        [str(first.id), "Contoso", "Cooling alert", "normal", "open"],
+        [str(second.id), "Fabrikam", "Badge reader offline", "high", "open"],
+    ]
+
+
+def test_export_jobs_csv_escapes_special_characters(service):
+    service.create_job(CreateJobRequest(
+        customer_name="Contoso, Inc.",
+        description='Needs "urgent" follow-up',
+    ))
+
+    csv_text = service.export_jobs_csv()
+
+    assert '"Contoso, Inc.","Needs ""urgent"" follow-up",normal,open' in csv_text
 
 
 @pytest.mark.parametrize("priority", ["normal", "high", "critical"])

@@ -1,7 +1,7 @@
 """Thin HTTP routes and static dashboard hosting."""
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -9,6 +9,12 @@ from app.models import CreateJobRequest, Job
 from app.service import JobService
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+class CSVResponse(Response):
+    media_type = "text/csv"
+
+
 app = FastAPI(title="Contoso Field Service API", version="1.0.0")
 service = JobService.with_demo_data()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -27,6 +33,15 @@ def health():
 @app.get("/jobs", response_model=list[Job])
 def list_jobs():
     return service.list_jobs()
+
+
+@app.get("/jobs/export", response_class=CSVResponse)
+def export_jobs():
+    return CSVResponse(
+        content=service.export_jobs_csv(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="jobs.csv"'},
+    )
 
 
 @app.get("/jobs/{job_id}", response_model=Job)

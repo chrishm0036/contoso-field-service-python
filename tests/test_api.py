@@ -12,6 +12,13 @@ def client(monkeypatch):
         yield client
 
 
+@pytest.fixture
+def empty_client(monkeypatch):
+    monkeypatch.setattr(main, "service", JobService())
+    with TestClient(main.app) as client:
+        yield client
+
+
 def test_dashboard_health_and_docs(client):
     page = client.get("/")
     assert page.status_code == 200
@@ -32,6 +39,42 @@ def test_seeded_jobs_and_detail(client):
     assert client.get("/jobs/1").json() == jobs[0]
     assert client.get("/jobs/999").status_code == 404
     assert client.get("/jobs/not-an-id").status_code == 422
+
+
+def test_export_jobs_returns_csv_download(client):
+    response = client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert response.headers["content-disposition"] == 'attachment; filename="jobs.csv"'
+    lines = response.text.splitlines()
+    assert lines[0] == "ID,customer,description,priority,status"
+    assert lines[1] == (
+        "1,Contoso Madrid,Server room cooling alert,critical,open"
+    )
+
+
+def test_export_jobs_returns_header_only_when_empty(empty_client):
+    response = empty_client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert response.text.splitlines() == ["ID,customer,description,priority,status"]
+
+
+def test_export_jobs_escapes_csv_values(client):
+    create_response = client.post("/jobs", json={
+        "customer_name": "Contoso, Inc.",
+        "description": 'Needs "urgent" follow-up',
+        "priority": "high",
+        "location": "Madrid",
+        "technician": "Elena",
+    })
+    assert create_response.status_code == 201
+
+    response = client.get("/jobs/export")
+
+    assert response.status_code == 200
+    assert '"Contoso, Inc.","Needs ""urgent"" follow-up",high,open' in response.text
 
 
 def test_create_job(client):
