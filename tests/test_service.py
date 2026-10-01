@@ -101,3 +101,21 @@ def test_demo_data_is_populated_and_isolated():
     assert {job.priority for job in first.list_jobs()} == {"normal", "high", "critical"}
     first.create_job(CreateJobRequest(customer_name="New", description="Issue"))
     assert len(second.list_jobs()) == 6
+
+
+def test_update_priority_changes_the_stored_job(service, request_data):
+    job = service.create_job(request_data)
+    updated = service.update_priority(job.id, "critical")
+    assert updated.priority == "critical"
+    assert service.get_job(job.id).priority == "critical"
+
+
+def test_update_priority_preserves_other_fields(service, request_data):
+    job = service.create_job(request_data)
+    updated = service.update_priority(job.id, "high")
+    assert (updated.id, updated.customer_name, updated.description) == (job.id, job.customer_name, job.description)
+    assert (updated.status, updated.created_at) == (job.status, job.created_at)
+
+
+def test_update_priority_on_unknown_job_returns_none(service):
+    assert service.update_priority(999, "high") is None

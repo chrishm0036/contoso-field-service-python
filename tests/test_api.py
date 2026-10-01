@@ -55,3 +55,14 @@ def test_create_job(client):
 def test_invalid_create_leaves_store_unchanged(client, payload):
     assert client.post("/jobs", json=payload).status_code == 422
     assert len(client.get("/jobs").json()) == 6
+
+
+def test_update_job_priority(client):
+    response = client.patch("/jobs/3/priority", json={"priority": "critical"})
+    assert response.status_code == 200
+    assert response.json()["priority"] == "critical"
+    assert client.get("/jobs/3").json()["priority"] == "critical"
+
+
+def test_update_priority_on_unknown_job_returns_404(client):
+    assert client.patch("/jobs/999/priority", json={"priority": "high"}).status_code == 404
