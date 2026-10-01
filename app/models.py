@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 Priority = Literal["normal", "high", "critical"]
+SlaStatus = Literal["within_sla", "breached"]
 
 
 class CreateJobRequest(BaseModel):
@@ -23,3 +24,5 @@ class Job(CreateJobRequest):
     id: int = Field(gt=0)
     status: Literal["open"] = "open"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    sla_status: SlaStatus = "within_sla"
+    sla_remaining_seconds: int = 0

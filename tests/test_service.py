@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -9,7 +10,8 @@ from app.service import JobService
 
 @pytest.fixture
 def service():
-    return JobService()
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    return JobService(now_provider=lambda: current_time)
 
 
 @pytest.fixture
@@ -19,6 +21,7 @@ def request_data():
 
 def test_create_job(service, request_data):
     job = service.create_job(request_data)
+    assert isinstance(job, Job)
     assert job.id == 1
     assert job.customer_name == "Contoso Madrid"
     assert job.description == "Cooling alert"
@@ -27,6 +30,8 @@ def test_create_job(service, request_data):
     assert job.location == "Unspecified"
     assert job.technician == "Unassigned"
     assert job.created_at.utcoffset().total_seconds() == 0
+    assert job.sla_status == "within_sla"
+    assert job.sla_remaining_seconds == 24 * 60 * 60
 
 
 def test_get_existing_job(service, request_data):
@@ -78,7 +83,7 @@ def test_input_is_trimmed():
 
 def test_invalid_status(request_data):
     with pytest.raises(ValidationError):
-        Job(id=1, status="invalid", **request_data.model_dump())
+        Job(id=1, status="invalid", sla_status="within_sla", sla_remaining_seconds=60, **request_data.model_dump())
 
 
 def test_stored_job_cannot_be_mutated(service, request_data):
@@ -101,3 +106,31 @@ def test_demo_data_is_populated_and_isolated():
     assert {job.priority for job in first.list_jobs()} == {"normal", "high", "critical"}
     first.create_job(CreateJobRequest(customer_name="New", description="Issue"))
     assert len(second.list_jobs()) == 6
+
+
+@pytest.mark.parametrize("priority,expected_seconds", [
+    ("critical", 60 * 60),
+    ("high", 4 * 60 * 60),
+    ("normal", 24 * 60 * 60),
+])
+def test_sla_target_by_priority(priority, expected_seconds):
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    service = JobService(now_provider=lambda: current_time)
+
+    job = service.create_job(CreateJobRequest(customer_name="Customer", description="Issue", priority=priority))
+
+    assert job.sla_status == "within_sla"
+    assert job.sla_remaining_seconds == expected_seconds
+
+
+def test_sla_breaches_after_target_expires():
+    current_time = datetime(2026, 1, 2, 12, 0, tzinfo=timezone.utc)
+    service = JobService(now_provider=lambda: current_time)
+    job = service.create_job(CreateJobRequest(customer_name="Customer", description="Issue", priority="critical"))
+
+    current_time = current_time + timedelta(hours=1, minutes=5)
+    breached = service.get_job(job.id)
+
+    assert breached is not None
+    assert breached.sla_status == "breached"
+    assert breached.sla_remaining_seconds == -(5 * 60)
