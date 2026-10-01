@@ -1,5 +1,10 @@
 # When someone reports an issue, hand it straight to the Copilot coding agent.
+#
 # Issue events only fire from the default branch, so this must stay on main.
+# GitHub refuses agent assignment from the built-in GITHUB_TOKEN ("not supported
+# with GitHub App installation tokens"), so this needs a user PAT in the
+# COPILOT_ASSIGN_TOKEN secret. Without that secret the job skips quietly rather
+# than failing, so a missing token never puts a red cross on a new issue.
 name: Assign new issues to Copilot
 
 on:
@@ -15,9 +20,18 @@ jobs:
     steps:
       - name: Hand the issue to the coding agent
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSIGN_TOKEN: ${{ secrets.COPILOT_ASSIGN_TOKEN }}
           ISSUE_ID: ${{ github.event.issue.node_id }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
         run: |
+          if [ -z "$ASSIGN_TOKEN" ]; then
+            echo "COPILOT_ASSIGN_TOKEN is not set - skipping automatic assignment."
+            echo "Assign Copilot manually from the issue page."
+            exit 0
+          fi
+          export GH_TOKEN="$ASSIGN_TOKEN"
+
           BOT_ID=$(gh api graphql -f query='
             query($o:String!,$n:String!){
               repository(owner:$o,name:$n){
@@ -25,11 +39,13 @@ jobs:
                   nodes{ login __typename ... on Bot { id } }
                 }
               }
-            }' -f o="${{ github.repository_owner }}" -f n="${{ github.event.repository.name }}" \
+            }' -f o="$OWNER" -f n="$REPO" \
             --jq '.data.repository.suggestedActors.nodes[] | select(.login=="copilot-swe-agent") | .id')
 
-          echo "Copilot bot id: $BOT_ID"
-          test -n "$BOT_ID" || { echo "Copilot is not assignable in this repository"; exit 1; }
+          if [ -z "$BOT_ID" ]; then
+            echo "Copilot is not assignable in this repository - skipping."
+            exit 0
+          fi
 
           gh api graphql -f query='
             mutation($assignable:ID!,$actor:ID!){
@@ -37,3 +53,5 @@ jobs:
                 assignable { ... on Issue { number assignees(first:5){ nodes{ login } } } }
               }
             }' -f assignable="$ISSUE_ID" -f actor="$BOT_ID"
+
+          echo "Assigned Copilot to the new issue."
