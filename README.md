@@ -38,3 +38,5 @@ The API exposes `GET /health`, `GET /jobs`, `GET /jobs/{job_id}`, and `POST /job
 Repository-wide Copilot guidance lives in `.github/copilot-instructions.md`; path-specific guidance lives in `.github/instructions/`. `AGENTS.md` provides repository-level agent instructions. These describe architecture, validation, testing, and change discipline without relying on automatic custom-agent selection.
 
 The service boundary and isolated tests leave room for focused additions such as SLA tracking and CSV export. Run tests before proposing changes; keep the stack simple.
+
+# Smoke test for automatic review wiring.
