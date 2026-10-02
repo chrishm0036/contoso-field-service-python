@@ -23,6 +23,7 @@ function render() {
   visible.forEach((job) => {
     const card = byId("job-template").content.cloneNode(true);
     const set = (selector, value) => { card.querySelector(selector).textContent = value; };
+    card.querySelector(".job").classList.add(job.priority);
     set(".job-id", `JOB-${String(job.id).padStart(4, "0")}`);
     set(".customer", job.customer_name);
     set(".description", job.description);
