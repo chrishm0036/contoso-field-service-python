@@ -28,6 +28,12 @@ h3 { font-size: 13px; margin: 2px 0; font-weight: bold; }
 .job-top, .job-details, .job-footer { font-size: 11px; }
 .badge { border: 1px solid #666; padding: 0 4px; font-size: 10px; }
 .customer { font-size: 11px; margin: 2px 0; }
+.job.critical { border: 2px solid #a32b25; border-left-width: 6px; background: #fff4f2; }
+.job.high { border: 2px solid #805000; border-left-width: 6px; background: #fff8e8; }
+.badge.critical { color: #fff; background: #a32b25; border-color: #a32b25; font-weight: bold; }
+.badge.high { color: #fff; background: #704000; border-color: #704000; font-weight: bold; }
+.priority-metric { border-color: #a32b25; border-left: 4px solid #a32b25; background: #fff4f2; }
+.priority-metric strong, .urgent-icon { color: #a32b25; }
 
 .notice, .list-footer, .page-footer { font-size: 11px; margin-top: 8px; }
 .page-footer { border-top: 1px solid #000; padding-top: 4px; }
